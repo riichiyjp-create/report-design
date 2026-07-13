@@ -1,0 +1,44 @@
+{
+  "manifest_version": 1,
+  "version": "1.25.0",
+  "type": "APP",
+  "name": {
+    "en": "Report Designer",
+    "ja": "帳票デザイナー"
+  },
+  "description": {
+    "en": "Band-free report designer: place text, fields, shapes, images and tables on paper and print.",
+    "ja": "テキスト・フィールド・図形・画像・テーブルを自由配置して印刷する帳票デザイナー"
+  },
+  "icon": "image/icon.png",
+  "desktop": {
+    "js": [
+      "js/lib/qrcode.min.js",
+      "js/lib/JsBarcode.all.min.js",
+      "js/lib/pdf-lib.min.js",
+      "js/lib/html2canvas.min.js",
+      "https://cdn.jsdelivr.net/gh/YOUR_GITHUB_USER/report-designer@main/js/common.js",
+      "https://cdn.jsdelivr.net/gh/YOUR_GITHUB_USER/report-designer@main/js/desktop.js"
+    ],
+    "css": []
+  },
+  "mobile": {
+    "js": [],
+    "css": []
+  },
+  "config": {
+    "html": "html/config.html",
+    "js": [
+      "js/lib/qrcode.min.js",
+      "js/lib/JsBarcode.all.min.js",
+      "https://cdn.jsdelivr.net/gh/YOUR_GITHUB_USER/report-designer@main/js/common.js",
+      "https://cdn.jsdelivr.net/gh/YOUR_GITHUB_USER/report-designer@main/js/config.js"
+    ],
+    "css": [
+      "css/config.css"
+    ],
+    "required_params": [
+      "templates"
+    ]
+  }
+}

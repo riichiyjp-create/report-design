@@ -1,0 +1,88 @@
+<div id="rpt-root">
+
+  <!-- ======== Toolbar ======== -->
+  <div id="rpt-toolbar">
+    <span class="rpt-logo">📄 <span id="i18n-title">Report Designer</span></span>
+
+    <span class="rpt-tb-group">
+      <button type="button" id="btn-add-text"  class="rpt-tb-btn" title="Text">T</button>
+      <button type="button" id="btn-add-rect"  class="rpt-tb-btn" title="Rectangle">▭</button>
+      <button type="button" id="btn-add-line"  class="rpt-tb-btn" title="Line">─</button>
+      <button type="button" id="btn-add-ellipse" class="rpt-tb-btn" title="Ellipse">◯</button>
+      <button type="button" id="btn-add-image" class="rpt-tb-btn" title="Image">🖼</button>
+      <button type="button" id="btn-add-barcode" class="rpt-tb-btn" title="Barcode">〣</button>
+      <button type="button" id="btn-add-qr" class="rpt-tb-btn" title="QR">▩</button>
+      <button type="button" id="btn-add-table" class="rpt-tb-btn" title="Table">▦</button>
+    </span>
+
+    <span class="rpt-tb-group">
+      <button type="button" id="btn-undo" class="rpt-tb-btn" title="Undo (Ctrl+Z)">↺</button>
+      <button type="button" id="btn-redo" class="rpt-tb-btn" title="Redo (Ctrl+Y)">↻</button>
+    </span>
+
+    <span class="rpt-tb-group">
+      <label class="rpt-tb-label"><input type="checkbox" id="chk-snap" checked> <span id="i18n-snap">Snap</span></label>
+      <label class="rpt-tb-label"><input type="checkbox" id="chk-grid" checked> <span id="i18n-grid">Grid</span></label>
+      <select id="sel-gridsize" class="rpt-tb-select">
+        <option value="1">1mm</option>
+        <option value="2">2mm</option>
+        <option value="5" selected>5mm</option>
+        <option value="10">10mm</option>
+      </select>
+    </span>
+
+    <span class="rpt-tb-group">
+      <button type="button" id="btn-zoom-out" class="rpt-tb-btn">－</button>
+      <span id="zoom-label" class="rpt-tb-label">100%</span>
+      <button type="button" id="btn-zoom-in" class="rpt-tb-btn">＋</button>
+    </span>
+
+    <span class="rpt-tb-group">
+      <button type="button" id="btn-preview" class="rpt-tb-btn" style="width:auto;padding:0 10px;">👁 <span id="i18n-preview">Preview</span></button>
+      <button type="button" id="btn-help" class="rpt-tb-btn rpt-help-btn" title="Help">?</button>
+    </span>
+
+    <span class="rpt-tb-spacer"></span>
+    <span id="status-msg"></span>
+    <button type="button" id="btn-save" class="rpt-btn-primary" >Save</button>
+    <button type="button" id="btn-cancel" class="rpt-btn-plain">Cancel</button>
+  </div>
+
+  <div id="rpt-body">
+
+    <!-- ======== Left pane ======== -->
+    <div id="rpt-left">
+      <div class="rpt-pane-title" id="i18n-templates">Templates</div>
+      <div id="template-list"></div>
+      <button type="button" id="btn-add-template" class="rpt-btn-plain rpt-w100">＋ <span id="i18n-add-template">Add template</span></button>
+      <div style="display:flex;gap:4px;margin-top:4px;">
+        <button type="button" id="btn-export-tpl" class="rpt-btn-mini" style="flex:1;">⇩ <span id="i18n-export">Export</span></button>
+        <button type="button" id="btn-import-tpl" class="rpt-btn-mini" style="flex:1;">⇧ <span id="i18n-import">Import</span></button>
+      </div>
+
+      <div class="rpt-pane-title" id="i18n-fields">Data Source</div>
+      <input type="text" id="field-search" class="rpt-w100" placeholder="search...">
+      <div id="field-palette"></div>
+    </div>
+
+    <!-- ======== Canvas ======== -->
+    <div id="rpt-canvas-wrap">
+      <div id="rpt-canvas-scroll">
+        <div id="rpt-paper">
+          <div id="rpt-page">
+            <div id="rpt-grid"></div>
+            <div id="rpt-elements"></div>
+            <div id="rpt-guides"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======== Right pane (properties) ======== -->
+    <div id="rpt-right">
+      <div class="rpt-pane-title" id="props-title">Properties</div>
+      <div id="props-body"></div>
+    </div>
+
+  </div>
+</div>
