@@ -6,7 +6,7 @@
 (function (PLUGIN_ID) {
   'use strict';
 
-  var VERSION = '1.25.1';
+  var VERSION = '1.25.2';
 
   /* ---------------- i18n ---------------- */
   var LANG = (kintone.getLoginUser && kintone.getLoginUser().language) === 'ja' ? 'ja' : 'en';
@@ -3582,13 +3582,14 @@
   }
   function updateUsageMeter() {
     var el = $('usage-label');
-    if (!el) return;
     var conf = buildConf();
     var total = RPTC.configTotalBytes(conf);
     var kb = Math.ceil(total / 1024), maxKb = Math.floor(RPTC.CONFIG_TOTAL_BUDGET / 1024);
     var pct = total / RPTC.CONFIG_TOTAL_BUDGET;
-    el.textContent = kb + '/' + maxKb + 'KB';
-    el.style.color = pct > 1 ? '#c0392b' : pct > 0.8 ? '#d68910' : '#888';
+    if (el) {
+      el.textContent = kb + '/' + maxKb + 'KB';
+      el.style.color = pct > 1 ? '#c0392b' : pct > 0.8 ? '#d68910' : '#888';
+    }
     // detailed breakdown always available for diagnosis
     console.log('[ReportDesigner v' + VERSION + '] config usage', kb + 'KB /', maxKb + 'KB', RPTC.configBreakdown(conf).slice(0, 8));
     return { conf: conf, total: total, kb: kb, maxKb: maxKb };
@@ -3637,7 +3638,7 @@
   }
   function applyI18nLabels() {
     var lg = document.querySelector('.rpt-logo');
-    if (lg) lg.innerHTML = '<span id="usage-label" style="font-size:10px;color:#888;font-weight:normal;"></span>';
+    if (lg) { lg.innerHTML = ''; lg.style.display = 'none'; }
     var map = {
       'i18n-title': 'title', 'i18n-snap': 'snap', 'i18n-grid': 'grid',
       'i18n-templates': 'templates', 'i18n-add-template': 'addTemplate',
