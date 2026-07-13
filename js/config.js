@@ -6,7 +6,7 @@
 (function (PLUGIN_ID) {
   'use strict';
 
-  var VERSION = '1.24.8';
+  var VERSION = '1.25.1';
 
   /* ---------------- i18n ---------------- */
   var LANG = (kintone.getLoginUser && kintone.getLoginUser().language) === 'ja' ? 'ja' : 'en';
@@ -3637,8 +3637,7 @@
   }
   function applyI18nLabels() {
     var lg = document.querySelector('.rpt-logo');
-    if (lg) lg.innerHTML += ' <span style="font-size:10px;color:#999;font-weight:normal;">v' + VERSION + '</span>' +
-      ' <span id="usage-label" style="font-size:10px;color:#888;font-weight:normal;margin-left:6px;"></span>';
+    if (lg) lg.innerHTML = '<span id="usage-label" style="font-size:10px;color:#888;font-weight:normal;"></span>';
     var map = {
       'i18n-title': 'title', 'i18n-snap': 'snap', 'i18n-grid': 'grid',
       'i18n-templates': 'templates', 'i18n-add-template': 'addTemplate',
