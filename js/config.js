@@ -6,7 +6,8 @@
 (function (PLUGIN_ID) {
   'use strict';
 
-  var VERSION = '1.25.2';
+  var VERSION = '1.26.0';
+  var RPT_HTML = "\n\n  <!-- ======== Toolbar ======== -->\n  <div id=\"rpt-toolbar\">\n    <span class=\"rpt-logo\" id=\"rpt-version\" style=\"font-size:11px;color:#999;font-weight:600;\"></span>\n\n    <span class=\"rpt-tb-group\">\n      <button type=\"button\" id=\"btn-add-text\"  class=\"rpt-tb-btn\" title=\"Text\">T</button>\n      <button type=\"button\" id=\"btn-add-rect\"  class=\"rpt-tb-btn\" title=\"Rectangle\">▭</button>\n      <button type=\"button\" id=\"btn-add-line\"  class=\"rpt-tb-btn\" title=\"Line\">─</button>\n      <button type=\"button\" id=\"btn-add-ellipse\" class=\"rpt-tb-btn\" title=\"Ellipse\">◯</button>\n      <button type=\"button\" id=\"btn-add-image\" class=\"rpt-tb-btn\" title=\"Image\">🖼</button>\n      <button type=\"button\" id=\"btn-add-barcode\" class=\"rpt-tb-btn\" title=\"Barcode\">〣</button>\n      <button type=\"button\" id=\"btn-add-qr\" class=\"rpt-tb-btn\" title=\"QR\">▩</button>\n      <button type=\"button\" id=\"btn-add-table\" class=\"rpt-tb-btn\" title=\"Table\">▦</button>\n    </span>\n\n    <span class=\"rpt-tb-group\">\n      <button type=\"button\" id=\"btn-undo\" class=\"rpt-tb-btn\" title=\"Undo (Ctrl+Z)\">↺</button>\n      <button type=\"button\" id=\"btn-redo\" class=\"rpt-tb-btn\" title=\"Redo (Ctrl+Y)\">↻</button>\n    </span>\n\n    <span class=\"rpt-tb-group\">\n      <label class=\"rpt-tb-label\"><input type=\"checkbox\" id=\"chk-snap\" checked> <span id=\"i18n-snap\">Snap</span></label>\n      <label class=\"rpt-tb-label\"><input type=\"checkbox\" id=\"chk-grid\" checked> <span id=\"i18n-grid\">Grid</span></label>\n      <select id=\"sel-gridsize\" class=\"rpt-tb-select\">\n        <option value=\"1\">1mm</option>\n        <option value=\"2\">2mm</option>\n        <option value=\"5\" selected>5mm</option>\n        <option value=\"10\">10mm</option>\n      </select>\n    </span>\n\n    <span class=\"rpt-tb-group\">\n      <button type=\"button\" id=\"btn-zoom-out\" class=\"rpt-tb-btn\">－</button>\n      <span id=\"zoom-label\" class=\"rpt-tb-label\">100%</span>\n      <button type=\"button\" id=\"btn-zoom-in\" class=\"rpt-tb-btn\">＋</button>\n    </span>\n\n    <span class=\"rpt-tb-group\">\n      <button type=\"button\" id=\"btn-preview\" class=\"rpt-tb-btn\" style=\"width:auto;padding:0 10px;\">👁 <span id=\"i18n-preview\">Preview</span></button>\n      <button type=\"button\" id=\"btn-help\" class=\"rpt-tb-btn rpt-help-btn\" title=\"Help\">?</button>\n    </span>\n\n    <span class=\"rpt-tb-spacer\"></span>\n    <span id=\"status-msg\"></span>\n    <button type=\"button\" id=\"btn-save\" class=\"rpt-btn-primary\" >Save</button>\n    <button type=\"button\" id=\"btn-cancel\" class=\"rpt-btn-plain\">Cancel</button>\n  </div>\n\n  <div id=\"rpt-body\">\n\n    <!-- ======== Left pane ======== -->\n    <div id=\"rpt-left\">\n      <div class=\"rpt-pane-title\" id=\"i18n-templates\">Templates</div>\n      <div id=\"template-list\"></div>\n      <button type=\"button\" id=\"btn-add-template\" class=\"rpt-btn-plain rpt-w100\">＋ <span id=\"i18n-add-template\">Add template</span></button>\n      <div style=\"display:flex;gap:4px;margin-top:4px;\">\n        <button type=\"button\" id=\"btn-export-tpl\" class=\"rpt-btn-mini\" style=\"flex:1;\">⇩ <span id=\"i18n-export\">Export</span></button>\n        <button type=\"button\" id=\"btn-import-tpl\" class=\"rpt-btn-mini\" style=\"flex:1;\">⇧ <span id=\"i18n-import\">Import</span></button>\n      </div>\n\n      <div class=\"rpt-pane-title\" id=\"i18n-fields\">Data Source</div>\n      <input type=\"text\" id=\"field-search\" class=\"rpt-w100\" placeholder=\"search...\">\n      <div id=\"field-palette\"></div>\n    </div>\n\n    <!-- ======== Canvas ======== -->\n    <div id=\"rpt-canvas-wrap\">\n      <div id=\"rpt-canvas-scroll\">\n        <div id=\"rpt-paper\">\n          <div id=\"rpt-page\">\n            <div id=\"rpt-grid\"></div>\n            <div id=\"rpt-elements\"></div>\n            <div id=\"rpt-guides\"></div>\n          </div>\n        </div>\n      </div>\n    </div>\n\n    <!-- ======== Right pane (properties) ======== -->\n    <div id=\"rpt-right\">\n      <div class=\"rpt-pane-title\" id=\"props-title\">Properties</div>\n      <div id=\"props-body\"></div>\n    </div>\n\n  </div>\n";
 
   /* ---------------- i18n ---------------- */
   var LANG = (kintone.getLoginUser && kintone.getLoginUser().language) === 'ja' ? 'ja' : 'en';
@@ -3637,8 +3638,8 @@
     els.zoomLabel = $('zoom-label');
   }
   function applyI18nLabels() {
-    var lg = document.querySelector('.rpt-logo');
-    if (lg) { lg.innerHTML = ''; lg.style.display = 'none'; }
+    var lg = document.getElementById('rpt-version');
+    if (lg) lg.textContent = 'v' + VERSION;
     var map = {
       'i18n-title': 'title', 'i18n-snap': 'snap', 'i18n-grid': 'grid',
       'i18n-templates': 'templates', 'i18n-add-template': 'addTemplate',
@@ -3686,6 +3687,8 @@
   }
 
   function init() {
+    var root = document.getElementById('rpt-root');
+    if (root) root.innerHTML = RPT_HTML;
     cacheEls();
     ensureColorPalette();
     applyI18nLabels();
