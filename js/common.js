@@ -386,6 +386,11 @@
       outer: (o > 0) ? ('border:' + o + 'mm solid ' + c + ';') : ''
     };
   };
+  /* Which pages an element renders on. New templates store pageShow directly;
+   * older ones only have the repeatAllPages boolean, which maps onto it. */
+  RPTC.pageShowOf = function (el) {
+    return el.pageShow || (el.repeatAllPages ? 'all' : 'first');
+  };
   RPTC.boxCss = function (el) {
     return 'position:absolute;box-sizing:border-box;overflow:hidden;' +
       'left:' + el.x + 'mm;top:' + el.y + 'mm;' +
@@ -712,6 +717,9 @@
       });
       if (withFooters && el.fillRows) {
         var capH = Math.max(0, geomH - effHeaderH - footers.length * rowH);
+        // a continuation slice spans most of the sheet; padding to that height
+        // yields a page-long wall of blank rows, so cap at the DESIGNED height
+        if (!opts.full) capH = Math.min(capH, Math.max(0, el.h - effHeaderH - footers.length * rowH));
         padCount = Math.max(0, Math.floor((capH - usedH) / rowH));
       }
     } else {
@@ -806,6 +814,11 @@
     stream.forEach(function (e) { totalH += e.h; if (e.newPageBefore) anyBreak = true; });
     if (!anyBreak && totalH <= avail1) return null; // fits on the designed page 1
 
+    // suffix heights of the display stream, for footer widow control below
+    var suffix = new Array(stream.length + 1); suffix[stream.length] = 0;
+    for (var sx = stream.length - 1; sx >= 0; sx--) suffix[sx] = suffix[sx + 1] + stream[sx].h;
+    var widow = (pt.footerWidow == null) ? 2 : Math.max(0, Number(pt.footerWidow) || 0);
+
     var slices = [];
     function mkSlice(full) {
       return full
@@ -854,6 +867,13 @@
         while (j < stream.length && (stream[j].k === 'gh' || stream[j].k === 'ch')) { req += stream[j].h; j++; }
         if (j < stream.length) req += stream[j].h;
       }
+      // footer widow control: page-1 capacity never reserves footer height, so
+      // a full page would evict the grand totals onto a sheet of their own.
+      // Break early instead, so the last `widow` rows travel with the totals.
+      if (F && widow && i >= stream.length - widow && cur.entries.length) {
+        var tail = suffix[i] + footH;
+        if (tail > cur.cap - cur.used && tail <= availN) breakTo(false, e);
+      }
       if (cur.used + req > cur.cap && cur.entries.length) breakTo(false, e);
       cur.entries.push(e);
       cur.used += e.h;
@@ -883,7 +903,11 @@
           if (!condT || condT.visible) parts.push(RPTC.renderTable(el, rec, _pg.slice));
           return;
         }
-        if (_pg.index > 0 && !(_pg.slice && _pg.slice.full) && !el.repeatAllPages) return; // page-1-only element (full group pages re-render everything)
+        // which pages an element appears on: 'first' (default) | 'all' | 'last'
+        var ps = RPTC.pageShowOf(el);
+        if (ps === 'last') { if (!_pg.isLast) return; }
+        else if (ps !== 'all' &&
+                 _pg.index > 0 && !(_pg.slice && _pg.slice.full)) return; // page-1-only (full group pages re-render everything)
       }
       var condOut = (el.conds && el.conds.length) ? RPTC.applyConds(el, rec, null) : null;
       if (condOut && !condOut.visible) return; // conditionally hidden
@@ -1135,7 +1159,7 @@
     return Promise.all(plan.map(function (slice, i) {
       var r2 = RPTC.withGroupVars(recWithPageVars(rec, i + 1, total), slice.gctx);
       return RPTC.renderPage(tpl, r2, images,
-        { index: i, ptId: pt.id, slice: slice });
+        { index: i, total: total, isLast: (i === total - 1), ptId: pt.id, slice: slice });
     }));
   };
 

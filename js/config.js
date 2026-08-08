@@ -8,7 +8,7 @@
 (function (PLUGIN_ID) {
   'use strict';
 
-  var VERSION = '1.28.0';
+  var VERSION = '1.29.0';
   var RPT_HTML = "\n\n  <!-- ======== Toolbar ======== -->\n  <div id=\"rpt-toolbar\">\n    <span class=\"rpt-logo\" id=\"rpt-version\" style=\"font-size:11px;color:#999;font-weight:600;\"></span>\n\n    <span class=\"rpt-tb-group\">\n      <button type=\"button\" id=\"btn-add-text\"  class=\"rpt-tb-btn\" title=\"Text\">T</button>\n      <button type=\"button\" id=\"btn-add-rect\"  class=\"rpt-tb-btn\" title=\"Rectangle\">▭</button>\n      <button type=\"button\" id=\"btn-add-line\"  class=\"rpt-tb-btn\" title=\"Line\">─</button>\n      <button type=\"button\" id=\"btn-add-ellipse\" class=\"rpt-tb-btn\" title=\"Ellipse\">◯</button>\n      <button type=\"button\" id=\"btn-add-image\" class=\"rpt-tb-btn\" title=\"Image\">🖼</button>\n      <button type=\"button\" id=\"btn-add-barcode\" class=\"rpt-tb-btn\" title=\"Barcode\">〣</button>\n      <button type=\"button\" id=\"btn-add-qr\" class=\"rpt-tb-btn\" title=\"QR\">▩</button>\n      <button type=\"button\" id=\"btn-add-table\" class=\"rpt-tb-btn\" title=\"Table\">▦</button>\n    </span>\n\n    <span class=\"rpt-tb-group\">\n      <button type=\"button\" id=\"btn-undo\" class=\"rpt-tb-btn\" title=\"Undo (Ctrl+Z)\">↺</button>\n      <button type=\"button\" id=\"btn-redo\" class=\"rpt-tb-btn\" title=\"Redo (Ctrl+Y)\">↻</button>\n    </span>\n\n    <span class=\"rpt-tb-group\">\n      <label class=\"rpt-tb-label\"><input type=\"checkbox\" id=\"chk-snap\" checked> <span id=\"i18n-snap\">Snap</span></label>\n      <label class=\"rpt-tb-label\"><input type=\"checkbox\" id=\"chk-grid\" checked> <span id=\"i18n-grid\">Grid</span></label>\n      <select id=\"sel-gridsize\" class=\"rpt-tb-select\">\n        <option value=\"1\">1mm</option>\n        <option value=\"2\">2mm</option>\n        <option value=\"5\" selected>5mm</option>\n        <option value=\"10\">10mm</option>\n      </select>\n    </span>\n\n    <span class=\"rpt-tb-group\">\n      <button type=\"button\" id=\"btn-zoom-out\" class=\"rpt-tb-btn\">－</button>\n      <span id=\"zoom-label\" class=\"rpt-tb-label\">100%</span>\n      <button type=\"button\" id=\"btn-zoom-in\" class=\"rpt-tb-btn\">＋</button>\n    </span>\n\n    <span class=\"rpt-tb-group\">\n      <button type=\"button\" id=\"btn-preview\" class=\"rpt-tb-btn\" style=\"width:auto;padding:0 10px;\">👁 <span id=\"i18n-preview\">Preview</span></button>\n      <button type=\"button\" id=\"btn-help\" class=\"rpt-tb-btn rpt-help-btn\" title=\"Help\">?</button>\n    </span>\n\n    <span class=\"rpt-tb-spacer\"></span>\n    <span id=\"status-msg\"></span>\n    <button type=\"button\" id=\"btn-save\" class=\"rpt-btn-primary\" >Save</button>\n    <button type=\"button\" id=\"btn-cancel\" class=\"rpt-btn-plain\">Cancel</button>\n  </div>\n\n  <div id=\"rpt-body\">\n\n    <!-- ======== Left pane ======== -->\n    <div id=\"rpt-left\">\n      <div class=\"rpt-pane-title\" id=\"i18n-templates\">Templates</div>\n      <div id=\"template-list\"></div>\n      <button type=\"button\" id=\"btn-add-template\" class=\"rpt-btn-plain rpt-w100\">＋ <span id=\"i18n-add-template\">Add template</span></button>\n      <div style=\"display:flex;gap:4px;margin-top:4px;\">\n        <button type=\"button\" id=\"btn-export-tpl\" class=\"rpt-btn-mini\" style=\"flex:1;\">⇩ <span id=\"i18n-export\">Export</span></button>\n        <button type=\"button\" id=\"btn-import-tpl\" class=\"rpt-btn-mini\" style=\"flex:1;\">⇧ <span id=\"i18n-import\">Import</span></button>\n      </div>\n\n      <div class=\"rpt-pane-title\" id=\"i18n-fields\">Data Source</div>\n      <input type=\"text\" id=\"field-search\" class=\"rpt-w100\" placeholder=\"search...\">\n      <div id=\"field-palette\"></div>\n    </div>\n\n    <!-- ======== Canvas ======== -->\n    <div id=\"rpt-canvas-wrap\">\n      <div id=\"rpt-canvas-scroll\">\n        <div id=\"rpt-paper\">\n          <div id=\"rpt-page\">\n            <div id=\"rpt-grid\"></div>\n            <div id=\"rpt-elements\"></div>\n            <div id=\"rpt-guides\"></div>\n          </div>\n        </div>\n      </div>\n    </div>\n\n    <!-- ======== Right pane (properties) ======== -->\n    <div id=\"rpt-right\">\n      <div class=\"rpt-pane-title\" id=\"props-title\">Properties</div>\n      <div id=\"props-body\"></div>\n    </div>\n\n  </div>\n";
 
   /* ---------------- i18n ---------------- */
@@ -109,6 +109,8 @@
       gridNote: '罫線幅0で罫線なし。外枠幅は0/空欄で罫線幅と同じ。',
       paginate: '改ページする(複数ページ)', contTop: '続き開始Y(mm)', contBottom: '下限マージン(mm)',
       repeatAllPages: '全ページ表示', pageVar: 'ページ番号', pagesVar: '総ページ数',
+      pageShow: '表示ページ', psFirst: '1ページ目のみ', psAll: '全ページ', psLast: '最終ページのみ',
+      footerWidow: '最終ページ最小行数',
       previewPage: 'ページ',
       footerNote: 'レコードのフィールドを表の最終行に続けて表示します',
       symbology: '種別', ctxCopy: 'コピー', ctxCut: '切り取り', ctxPaste: '貼り付け',
@@ -209,6 +211,8 @@
       gridNote: 'Grid width 0 = no lines. Outer frame 0/blank matches the grid width.',
       paginate: 'Paginate (multi-page)', contTop: 'Continuation top (mm)', contBottom: 'Bottom margin (mm)',
       repeatAllPages: 'Show on all pages', pageVar: 'Page number', pagesVar: 'Total pages',
+      pageShow: 'Show on', psFirst: 'First page only', psAll: 'All pages', psLast: 'Last page only',
+      footerWidow: 'Min rows on last page',
       previewPage: 'Page',
       footerNote: 'Record fields rendered right after the last table row',
       symbology: 'Type', ctxCopy: 'Copy', ctxCut: 'Cut', ctxPaste: 'Paste',
@@ -1812,6 +1816,7 @@
         if (el.contBottom == null) el.contBottom = 10;
         h2 += propRow(t('contTop'), inp(el, 'contTop', 'number', 'min="0" step="1"'));
         h2 += propRow(t('contBottom'), inp(el, 'contBottom', 'number', 'min="0" step="1"'));
+        h2 += propRow(t('footerWidow'), inp(el, 'footerWidow', 'number', 'min="0" max="20" step="1" placeholder="2"'));
       }
       h2 += '<div class="rpt-prop-section">' + esc(t('groups')) + '</div>';
       h2 += '<div class="rpt-prop-row"><button type="button" class="rpt-btn-mini" id="btn-group-dialog" style="flex:1;text-align:left;">' +
@@ -1831,9 +1836,16 @@
     }
     var anyPaginate = (tpl.elements || []).some(function (e) { return e.type === 'table' && e.paginate; });
     if (el.type !== 'table' || !el.paginate) {
-      h2 += propRow(t('repeatAllPages'),
-        '<input type="checkbox" data-prop="repeatAllPages"' + (el.repeatAllPages ? ' checked' : '') +
-        (anyPaginate ? '' : ' disabled title="改ページするテーブルがある場合のみ有効"') + '>');
+      var psCur = RPTC.pageShowOf(el); // migrates the old repeatAllPages boolean
+      h2 += propRow(t('pageShow'), (function () {
+        var s = '<select data-prop="pageShow"' +
+          (anyPaginate ? '' : ' disabled title="改ページするテーブルがある場合のみ有効"') + '>';
+        [{ v: 'first', l: t('psFirst') }, { v: 'all', l: t('psAll') }, { v: 'last', l: t('psLast') }]
+          .forEach(function (o) {
+            s += '<option value="' + o.v + '"' + (psCur === o.v ? ' selected' : '') + '>' + esc(o.l) + '</option>';
+          });
+        return s + '</select>';
+      })());
     }
     h2 += '<div class="rpt-prop-section">' + esc(t('conds')) + '</div>';
     h2 += '<div class="rpt-prop-row"><button type="button" class="rpt-btn-mini" id="btn-el-cond" style="flex:1;text-align:left;">' + esc(condBtnLabel(el)) + '</button></div>';
@@ -3205,7 +3217,11 @@
       '<h3>条件書式</h3>' +
       '<p>要素・テーブル列の「⚡条件書式」で、値に応じて文字色/背景/太字/非表示を切り替えます。列の条件は行ごとの値で判定されます(例: 数量=0 を赤)。</p>' +
       '<h3>複数ページ(改ページ)</h3>' +
-      '<p>テーブルの「改ページする」をONにすると、収まらない行が2ページ目以降に流れます。ロゴ等は「全ページ表示」をON。<code>{PAGE}</code> <code>{PAGES}</code>でページ番号を印字できます。フッター行は最終ページのみに出ます。</p>' +
+      '<p>テーブルの「改ページする」をONにすると、収まらない行が2ページ目以降に流れます。' +
+      '各要素の<b>表示ページ</b>で「1ページ目のみ / 全ページ / 最終ページのみ」を選べます' +
+      '(ロゴ・見積番号は「全ページ」、備考は「最終ページのみ」)。' +
+      '<code>{PAGE}</code> <code>{PAGES}</code>でページ番号を印字できます。' +
+      'フッター行は最終ページのみに出ます。<b>最終ページ最小行数</b>で、合計行だけが最終ページに残るのを防ぎます。</p>' +
       '<h3>ラベル出力(行毎)</h3>' +
       '<p>出力単位を「サブテーブル行毎」にすると、1行=1枚でラベルを出力します。対象サブテーブルのフィールドは通常のフィールドと同様に配置できます(▦印)。</p>' +
       '<h3>シート印刷(面付け)</h3>' +
@@ -3238,7 +3254,9 @@
       '<h3>Elements</h3><ul><li><kbd>Ctrl</kbd>/<kbd>Shift</kbd>+click multi-selects; move, delete, copy together; drag the purple box handles to scale the group; property edits apply to all selected.</li><li>Double-click text/field for the expression editor; mix <code>{fieldCode}</code> with text.</li><li>"Shrink to fit" auto-reduces the font when content overflows.</li></ul>' +
       '<h3>Tables</h3><p>Drop subtable fields to add columns. Totals go in footer rows. Resize columns via header grips; drag headers to reorder.</p>' +
       '<h3>Conditional format</h3><p>⚡ per element/column: color, background, bold, hide by value; column rules evaluate per row.</p>' +
-      '<h3>Multi-page</h3><p>Enable "Paginate" on the table; flag repeated elements "Show on all pages"; use <code>{PAGE}</code>/<code>{PAGES}</code>. Footers print on the last page.</p>' +
+      '<h3>Multi-page</h3><p>Enable "Paginate" on the table. Each element has a <b>Show on</b> setting: ' +
+      'first page only / all pages / last page only. Use <code>{PAGE}</code>/<code>{PAGES}</code> for page numbers. ' +
+      'Footers print on the last page; <b>Min rows on last page</b> stops the totals stranding there alone.</p>' +
       '<h3>Labels & sheets</h3><p>Output unit "Per subtable row" prints one page per row. Sheet layout imposes labels onto A4 etc.: "Divide evenly" sizes the label automatically (margins recalc live), cut lines optional, start position resumes partial sheets.</p>' +
       '<h3>PDF</h3><p>Set a PDF attachment field to add a Save-PDF action; filename accepts <code>{fieldCode}</code>. Print method "Via PDF" keeps the paper size in print preview.</p>' +
       '<h3>Shortcuts</h3><table><tr><td><kbd>Ctrl+Z/Y</kbd></td><td>Undo/redo</td></tr><tr><td><kbd>Ctrl+C/X/V/D</kbd></td><td>Copy/cut/paste/duplicate</td></tr><tr><td><kbd>Delete</kbd></td><td>Delete selection</td></tr><tr><td>Arrows</td><td>Nudge (Shift: 0.1mm)</td></tr></table>';
