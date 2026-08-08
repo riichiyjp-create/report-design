@@ -102,6 +102,8 @@
       sheetDivideDone: 'ラベルサイズを {w} × {h} mm に設定しました ({c}列 × {r}行)',
       autoFit: '自動縮小(はみ出し時)', multiSel: '{n}個選択中 - 変更は全てに適用されます',
       borderW: '枠線(mm)', borderColor: '枠線色', textStyle: 'スタイル',
+      tableGrid: '罫線', gridW: '罫線幅(mm)', gridColor: '罫線色', gridOuterW: '外枠幅(mm)',
+      gridNote: '罫線幅0で罫線なし。外枠幅は0/空欄で罫線幅と同じ。',
       paginate: '改ページする(複数ページ)', contTop: '続き開始Y(mm)', contBottom: '下限マージン(mm)',
       repeatAllPages: '全ページ表示', pageVar: 'ページ番号', pagesVar: '総ページ数',
       previewPage: 'ページ',
@@ -199,6 +201,8 @@
       sheetDivideDone: 'Label size set to {w} x {h} mm ({c} cols x {r} rows)',
       autoFit: 'Shrink to fit', multiSel: '{n} selected - edits apply to all',
       borderW: 'Border (mm)', borderColor: 'Border color', textStyle: 'Style',
+      tableGrid: 'Grid lines', gridW: 'Grid width (mm)', gridColor: 'Grid color', gridOuterW: 'Outer frame (mm)',
+      gridNote: 'Grid width 0 = no lines. Outer frame 0/blank matches the grid width.',
       paginate: 'Paginate (multi-page)', contTop: 'Continuation top (mm)', contBottom: 'Bottom margin (mm)',
       repeatAllPages: 'Show on all pages', pageVar: 'Page number', pagesVar: 'Total pages',
       previewPage: 'Page',
@@ -964,10 +968,10 @@
       var cols = el.columns || [];
       if (cols.length) {
         var footers = el.footers || [];
-        var bw = (el.strokeWidth || 0.2), bc = (el.strokeColor || '#000');
+        var grid = RPTC.tableGrid(el);
         var headerH = (el.headerH || 8), rowH = (el.rowH || 7);
         var basePad = (el.cellPad == null || el.cellPad === '') ? 1 : Number(el.cellPad) || 0;
-        var cellBase = 'border:' + bw + 'mm solid ' + bc + ';padding:0 ' + basePad + 'mm;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;';
+        var cellBase = grid.cell + 'padding:0 ' + basePad + 'mm;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;';
         function colPadC(c) { // per-column override, same rule as the print renderer
           return (c && c.pad != null && c.pad !== '') ? 'padding:0 ' + (Number(c.pad) || 0) + 'mm;' : '';
         }
@@ -1032,7 +1036,7 @@
           }
           rows += '</tr>';
         });
-        inner.innerHTML = '<table style="border-collapse:collapse;table-layout:fixed;width:' + totalW + 'mm;">' +
+        inner.innerHTML = '<table style="border-collapse:collapse;table-layout:fixed;width:' + totalW + 'mm;' + grid.outer + '">' +
           '<colgroup>' + colgroup + '</colgroup>' + thead + rows + '</table>';
       } else {
         inner.innerHTML = '<div style="color:#999;font-size:8pt;padding:4px;">▦ ' + esc(t('subtable')) + ': ' + esc(el.subtableCode || t('fieldNotSet')) + '</div>';
@@ -1789,6 +1793,12 @@
       h2 += propRow(t('rowH'), inp(el, 'rowH', 'number', 'min="3" step="0.5"'));
       h2 += propRow(t('fontSize'), inp(el, 'fontSize', 'number', 'min="4" max="48" step="0.5"'));
       h2 += propRow(t('bg'), colorInp(el, 'headerBg'));
+      h2 += '<div class="rpt-prop-section">' + esc(t('tableGrid')) + '</div>';
+      h2 += propRow(t('gridW'), inp(el, 'strokeWidth', 'number', 'min="0" max="2" step="0.05" placeholder="0.2"'));
+      h2 += propRow(t('gridColor'), colorInp(el, 'strokeColor'));
+      h2 += propRow(t('gridOuterW'), inp(el, 'outerW', 'number', 'min="0" max="2" step="0.05" placeholder="' + esc(el.strokeWidth == null ? 0.2 : el.strokeWidth) + '"'));
+      h2 += '<div style="font-size:10px;color:#888;margin:-2px 0 4px;">' + esc(t('gridNote')) + '</div>';
+      h2 += '<div class="rpt-prop-section"></div>';
       h2 += propRow(t('fillRows'), chk(el, 'fillRows'));
       h2 += propRow(t('minRows'), inp(el, 'minRows', 'number', 'min="0" max="100"'));
       h2 += propRow(t('paginate'), chk(el, 'paginate'));

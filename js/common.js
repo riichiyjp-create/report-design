@@ -372,6 +372,19 @@
     var w = Number(el.borderW);
     return (w > 0) ? ('border:' + w + 'mm solid ' + (el.borderColor || '#000000') + ';') : '';
   };
+  /* table grid metrics - one source of truth for the designer canvas and the
+   * print renderer. strokeWidth 0 means "no grid"; outerW blank/0 falls back to
+   * the grid width (border-collapse resolves the heavier edge). */
+  RPTC.tableGrid = function (el) {
+    var w = Number(el.strokeWidth); if (isNaN(w) || w < 0) w = 0.2;
+    var c = el.strokeColor || '#000';
+    var o = Number(el.outerW); if (isNaN(o) || o <= 0) o = w;
+    return {
+      w: w, color: c, outerW: o,
+      cell: (w > 0) ? ('border:' + w + 'mm solid ' + c + ';') : 'border:0;',
+      outer: (o > 0) ? ('border:' + o + 'mm solid ' + c + ';') : ''
+    };
+  };
   RPTC.boxCss = function (el) {
     return 'position:absolute;box-sizing:border-box;overflow:hidden;' +
       'left:' + el.x + 'mm;top:' + el.y + 'mm;' +
@@ -561,11 +574,10 @@
     var groups = RPTC.tableGroups(el);
     var footers = (el.footers || []).filter(function (f) { return !!f; });
     var fs = (el.fontSize || 9);
-    var bw = (el.strokeWidth || 0.2);
-    var bc = (el.strokeColor || '#000');
+    var grid = RPTC.tableGrid(el);
     var headerH = (el.headerH || 8), rowH = (el.rowH || 7);
     var basePad = (el.cellPad == null || el.cellPad === '') ? 1 : Number(el.cellPad) || 0;
-    var cellBase = 'border:' + bw + 'mm solid ' + bc + ';padding:0 ' + basePad + 'mm;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;';
+    var cellBase = grid.cell + 'padding:0 ' + basePad + 'mm;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;';
     function colPad(c) { // per-column override; later inline declaration wins over cellBase
       return (c && c.pad != null && c.pad !== '') ? 'padding:0 ' + (Number(c.pad) || 0) + 'mm;' : '';
     }
@@ -581,7 +593,7 @@
       'left:' + el.x + 'mm;top:' + geomY + 'mm;' +
       'width:' + Math.max(el.w, 0.2) + 'mm;height:' + Math.max(geomH, 0.2) + 'mm;';
     var h = '<div style="' + box + 'font-family:' + (el.fontFamily || 'Noto Sans JP') + ',sans-serif;font-size:' + fs + 'pt;">';
-    h += '<table style="border-collapse:collapse;table-layout:fixed;width:' + totalW + 'mm;"><colgroup>';
+    h += '<table style="border-collapse:collapse;table-layout:fixed;width:' + totalW + 'mm;' + grid.outer + '"><colgroup>';
     cols.forEach(function (c) { h += '<col style="width:' + c.width + 'mm;">'; });
     h += '</colgroup>';
     if (showHeader) {
