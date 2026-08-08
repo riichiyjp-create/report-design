@@ -1,6 +1,11 @@
 # The kintone plugin zip is a fixed shell (manifest version 1) that loads all
 # first-party code from jsDelivr @main. jsDelivr caches @main for ~12h, so a
 # push alone does not deploy. This purges the cache so push == deploy.
+#
+# Purging is NOT fire-and-forget: a purge issued before GitHub's raw endpoint
+# has settled makes jsDelivr re-fetch and re-cache the OLD file, which silently
+# leaves config.js and common.js on different versions. So every file is
+# verified against the committed content and re-purged until it matches.
 name: Purge jsDelivr
 
 on:
@@ -15,11 +20,39 @@ jobs:
   purge:
     runs-on: ubuntu-latest
     steps:
-      - name: Purge CDN cache
+      - uses: actions/checkout@v4
+
+      - name: Purge and verify
         run: |
-          for f in js/common.js js/config.js js/desktop.js css/config.css; do
-            url="https://purge.jsdelivr.net/gh/${GITHUB_REPOSITORY}@main/$f"
-            echo "purging $f"
-            curl -sS --max-time 30 "$url" || echo "  (purge request failed for $f)"
-            echo
+          set -u
+          FILES="js/common.js js/config.js js/desktop.js css/config.css"
+          BASE="https://cdn.jsdelivr.net/gh/${GITHUB_REPOSITORY}@main"
+          PURGE="https://purge.jsdelivr.net/gh/${GITHUB_REPOSITORY}@main"
+
+          # let GitHub's raw endpoint catch up, or the purge re-caches the old blob
+          sleep 20
+
+          failed=""
+          for f in $FILES; do
+            [ -f "$f" ] || { echo "skip $f (not in repo)"; continue; }
+            want=$(sha256sum "$f" | cut -d' ' -f1)
+            ok=""
+            for attempt in 1 2 3 4 5; do
+              curl -sS --max-time 30 "$PURGE/$f" > /dev/null || true
+              sleep $((attempt * 10))
+              got=$(curl -sS --max-time 30 "$BASE/$f" | sha256sum | cut -d' ' -f1)
+              if [ "$got" = "$want" ]; then
+                echo "OK   $f (attempt $attempt)"
+                ok=1
+                break
+              fi
+              echo "WAIT $f attempt $attempt: cdn=${got:0:12} want=${want:0:12}"
+            done
+            [ -n "$ok" ] || failed="$failed $f"
           done
+
+          if [ -n "$failed" ]; then
+            echo "::error::jsDelivr still stale for:$failed - the plugin will run mismatched versions"
+            exit 1
+          fi
+          echo "all files verified live on jsDelivr"

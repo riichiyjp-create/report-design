@@ -578,7 +578,7 @@
     cols = cols.filter(function (c) { return !!c; });
     if (!cols.length) return '';
     var groups = RPTC.tableGroups(el);
-    var footers = (el.footers || []).filter(function (f) { return !!f; });
+    var footers = RPTC.visibleFooters(el, rec);
     var fs = (el.fontSize || 9);
     var grid = RPTC.tableGrid(el);
     var headerH = (el.headerH || 8), rowH = (el.rowH || 7);
@@ -802,7 +802,7 @@
     var headerH = (pt.headerH || 8), rowH = (pt.rowH || 7);
     var effHeaderH = (pt.showHeader === false) ? 0 : headerH;
     var groups = RPTC.tableGroups(pt);
-    var F = ((pt.footers || []).filter(function (f) { return !!f; })).length;
+    var F = RPTC.visibleFooters(pt, rec).length; // conds may drop rows - reserve only what prints
     var footH = F * rowH;
     var avail1 = Math.max(rowH, pt.h - effHeaderH);
     var contTop = Number(pt.contTop) || 15;
@@ -1007,6 +1007,19 @@
       }
     });
     return out;
+  };
+
+  /* Footer rows honour 条件 (conds) like columns do, with one difference: a
+   * hidden footer drops the whole ROW instead of blanking its text - a blank
+   * ruled row inside a totals block reads as a mistake. paginatePlan uses this
+   * same list, so reserved footer height always matches what actually prints. */
+  RPTC.visibleFooters = function (el, rec) {
+    return (el.footers || []).filter(function (f) { return !!f; }).map(function (f) {
+      if (!f.conds || !f.conds.length) return f;
+      var o = RPTC.applyConds(f, rec, null);
+      if (!o.visible) return null;
+      return Object.assign({}, f, { color: o.color, bg: o.bg, bold: o.bold });
+    }).filter(Boolean);
   };
 
   // Which field codes does a template reference that the record does NOT contain?
