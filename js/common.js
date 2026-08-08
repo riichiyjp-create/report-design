@@ -583,6 +583,14 @@
       return (c && c.pad != null && c.pad !== '') ? 'padding:0 ' + (Number(c.pad) || 0) + 'mm;' : '';
     }
     var totalW = cols.reduce(function (a, c) { return a + (Number(c.width) || 0); }, 0);
+    // shrink-to-fit for data cells: the span is a BLOCK so it fills the cell's
+    // content box, letting autofitText measure the real available width.
+    // The base pt size rides along because a <td> carries no inline font-size.
+    function cellText(txt) {
+      if (!el.cellAutoFit) return RPTC.esc(txt);
+      return '<span data-autofit="' + fs + '" style="display:block;overflow:hidden;' +
+        'white-space:nowrap;text-overflow:ellipsis;">' + RPTC.esc(txt) + '</span>';
+    }
 
     var showHeader = el.showHeader !== false;
     var effHeaderH = showHeader ? headerH : 0;
@@ -627,7 +635,7 @@
           if (o.bg) extra += 'background:' + o.bg + ';';
           if (o.bold) extra += 'font-weight:bold;';
         }
-        s += '<td style="' + cellBase + colPad(c) + extra + 'text-align:' + (c.align || 'left') + ';">' + RPTC.esc(txt) + '</td>';
+        s += '<td style="' + cellBase + colPad(c) + extra + 'text-align:' + (c.align || 'left') + ';">' + cellText(txt) + '</td>';
       });
       return s + '</tr>';
     }
@@ -1138,7 +1146,11 @@
     Array.prototype.forEach.call(list, function (span) {
       var box = span.parentElement;
       if (!box) return;
-      var availW = box.clientWidth, availH = box.clientHeight;
+      // a BLOCK autofit span (table cells) fills its cell's content box, so its
+      // own clientWidth is the true text width; box.clientWidth would wrongly
+      // include the cell padding. Inline spans (text/field) report 0, so they
+      // fall through to the box as before.
+      var availW = span.clientWidth || box.clientWidth, availH = box.clientHeight;
       if (!availW || !availH) return;
       function ratio() {
         var r = Math.min(availW / Math.max(span.scrollWidth, 1),
@@ -1147,7 +1159,10 @@
       }
       var r = ratio();
       if (r >= 1) return;
-      var cur = parseFloat(box.style.fontSize) || 11;
+      // base size in pt: carried on the span when the box has no inline
+      // font-size of its own (table cells inherit theirs from the wrapper)
+      var cur = parseFloat(span.getAttribute('data-autofit')) ||
+                parseFloat(box.style.fontSize) || 11;
       var size = Math.max(4, Math.floor(cur * r * 10) / 10);
       span.style.fontSize = size + 'pt';
       r = ratio(); // fonts don't scale perfectly linearly - one correction pass

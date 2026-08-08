@@ -8,7 +8,7 @@
 (function (PLUGIN_ID) {
   'use strict';
 
-  var VERSION = '1.27.0';
+  var VERSION = '1.28.0';
   var RPT_HTML = "\n\n  <!-- ======== Toolbar ======== -->\n  <div id=\"rpt-toolbar\">\n    <span class=\"rpt-logo\" id=\"rpt-version\" style=\"font-size:11px;color:#999;font-weight:600;\"></span>\n\n    <span class=\"rpt-tb-group\">\n      <button type=\"button\" id=\"btn-add-text\"  class=\"rpt-tb-btn\" title=\"Text\">T</button>\n      <button type=\"button\" id=\"btn-add-rect\"  class=\"rpt-tb-btn\" title=\"Rectangle\">▭</button>\n      <button type=\"button\" id=\"btn-add-line\"  class=\"rpt-tb-btn\" title=\"Line\">─</button>\n      <button type=\"button\" id=\"btn-add-ellipse\" class=\"rpt-tb-btn\" title=\"Ellipse\">◯</button>\n      <button type=\"button\" id=\"btn-add-image\" class=\"rpt-tb-btn\" title=\"Image\">🖼</button>\n      <button type=\"button\" id=\"btn-add-barcode\" class=\"rpt-tb-btn\" title=\"Barcode\">〣</button>\n      <button type=\"button\" id=\"btn-add-qr\" class=\"rpt-tb-btn\" title=\"QR\">▩</button>\n      <button type=\"button\" id=\"btn-add-table\" class=\"rpt-tb-btn\" title=\"Table\">▦</button>\n    </span>\n\n    <span class=\"rpt-tb-group\">\n      <button type=\"button\" id=\"btn-undo\" class=\"rpt-tb-btn\" title=\"Undo (Ctrl+Z)\">↺</button>\n      <button type=\"button\" id=\"btn-redo\" class=\"rpt-tb-btn\" title=\"Redo (Ctrl+Y)\">↻</button>\n    </span>\n\n    <span class=\"rpt-tb-group\">\n      <label class=\"rpt-tb-label\"><input type=\"checkbox\" id=\"chk-snap\" checked> <span id=\"i18n-snap\">Snap</span></label>\n      <label class=\"rpt-tb-label\"><input type=\"checkbox\" id=\"chk-grid\" checked> <span id=\"i18n-grid\">Grid</span></label>\n      <select id=\"sel-gridsize\" class=\"rpt-tb-select\">\n        <option value=\"1\">1mm</option>\n        <option value=\"2\">2mm</option>\n        <option value=\"5\" selected>5mm</option>\n        <option value=\"10\">10mm</option>\n      </select>\n    </span>\n\n    <span class=\"rpt-tb-group\">\n      <button type=\"button\" id=\"btn-zoom-out\" class=\"rpt-tb-btn\">－</button>\n      <span id=\"zoom-label\" class=\"rpt-tb-label\">100%</span>\n      <button type=\"button\" id=\"btn-zoom-in\" class=\"rpt-tb-btn\">＋</button>\n    </span>\n\n    <span class=\"rpt-tb-group\">\n      <button type=\"button\" id=\"btn-preview\" class=\"rpt-tb-btn\" style=\"width:auto;padding:0 10px;\">👁 <span id=\"i18n-preview\">Preview</span></button>\n      <button type=\"button\" id=\"btn-help\" class=\"rpt-tb-btn rpt-help-btn\" title=\"Help\">?</button>\n    </span>\n\n    <span class=\"rpt-tb-spacer\"></span>\n    <span id=\"status-msg\"></span>\n    <button type=\"button\" id=\"btn-save\" class=\"rpt-btn-primary\" >Save</button>\n    <button type=\"button\" id=\"btn-cancel\" class=\"rpt-btn-plain\">Cancel</button>\n  </div>\n\n  <div id=\"rpt-body\">\n\n    <!-- ======== Left pane ======== -->\n    <div id=\"rpt-left\">\n      <div class=\"rpt-pane-title\" id=\"i18n-templates\">Templates</div>\n      <div id=\"template-list\"></div>\n      <button type=\"button\" id=\"btn-add-template\" class=\"rpt-btn-plain rpt-w100\">＋ <span id=\"i18n-add-template\">Add template</span></button>\n      <div style=\"display:flex;gap:4px;margin-top:4px;\">\n        <button type=\"button\" id=\"btn-export-tpl\" class=\"rpt-btn-mini\" style=\"flex:1;\">⇩ <span id=\"i18n-export\">Export</span></button>\n        <button type=\"button\" id=\"btn-import-tpl\" class=\"rpt-btn-mini\" style=\"flex:1;\">⇧ <span id=\"i18n-import\">Import</span></button>\n      </div>\n\n      <div class=\"rpt-pane-title\" id=\"i18n-fields\">Data Source</div>\n      <input type=\"text\" id=\"field-search\" class=\"rpt-w100\" placeholder=\"search...\">\n      <div id=\"field-palette\"></div>\n    </div>\n\n    <!-- ======== Canvas ======== -->\n    <div id=\"rpt-canvas-wrap\">\n      <div id=\"rpt-canvas-scroll\">\n        <div id=\"rpt-paper\">\n          <div id=\"rpt-page\">\n            <div id=\"rpt-grid\"></div>\n            <div id=\"rpt-elements\"></div>\n            <div id=\"rpt-guides\"></div>\n          </div>\n        </div>\n      </div>\n    </div>\n\n    <!-- ======== Right pane (properties) ======== -->\n    <div id=\"rpt-right\">\n      <div class=\"rpt-pane-title\" id=\"props-title\">Properties</div>\n      <div id=\"props-body\"></div>\n    </div>\n\n  </div>\n";
 
   /* ---------------- i18n ---------------- */
@@ -104,6 +104,7 @@
       sheetDivideDone: 'ラベルサイズを {w} × {h} mm に設定しました ({c}列 × {r}行)',
       autoFit: '自動縮小(はみ出し時)', multiSel: '{n}個選択中 - 変更は全てに適用されます',
       borderW: '枠線(mm)', borderColor: '枠線色', textStyle: 'スタイル',
+      cellAutoFit: 'セル自動縮小(はみ出し時)',
       tableGrid: '罫線', gridW: '罫線幅(mm)', gridColor: '罫線色', gridOuterW: '外枠幅(mm)',
       gridNote: '罫線幅0で罫線なし。外枠幅は0/空欄で罫線幅と同じ。',
       paginate: '改ページする(複数ページ)', contTop: '続き開始Y(mm)', contBottom: '下限マージン(mm)',
@@ -203,6 +204,7 @@
       sheetDivideDone: 'Label size set to {w} x {h} mm ({c} cols x {r} rows)',
       autoFit: 'Shrink to fit', multiSel: '{n} selected - edits apply to all',
       borderW: 'Border (mm)', borderColor: 'Border color', textStyle: 'Style',
+      cellAutoFit: 'Shrink cell text to fit',
       tableGrid: 'Grid lines', gridW: 'Grid width (mm)', gridColor: 'Grid color', gridOuterW: 'Outer frame (mm)',
       gridNote: 'Grid width 0 = no lines. Outer frame 0/blank matches the grid width.',
       paginate: 'Paginate (multi-page)', contTop: 'Continuation top (mm)', contBottom: 'Bottom margin (mm)',
@@ -1794,6 +1796,7 @@
       h2 += propRow(t('headerH'), inp(el, 'headerH', 'number', 'min="3" step="0.5"'));
       h2 += propRow(t('rowH'), inp(el, 'rowH', 'number', 'min="3" step="0.5"'));
       h2 += propRow(t('fontSize'), inp(el, 'fontSize', 'number', 'min="4" max="48" step="0.5"'));
+      h2 += propRow(t('cellAutoFit'), chk(el, 'cellAutoFit'));
       h2 += propRow(t('bg'), colorInp(el, 'headerBg'));
       h2 += '<div class="rpt-prop-section">' + esc(t('tableGrid')) + '</div>';
       h2 += propRow(t('gridW'), inp(el, 'strokeWidth', 'number', 'min="0" max="2" step="0.05" placeholder="0.2"'));
@@ -3499,6 +3502,7 @@
           pageDiv.innerHTML = page.html;
           scroll.appendChild(pageDiv);
           RPTC.injectImages(pageDiv, page.images);
+          RPTC.autofitText(pageDiv); // preview must shrink cells the same way print does
         });
       });
     }).catch(function (e) {
