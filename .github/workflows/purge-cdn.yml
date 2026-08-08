@@ -1,0 +1,25 @@
+# The kintone plugin zip is a fixed shell (manifest version 1) that loads all
+# first-party code from jsDelivr @main. jsDelivr caches @main for ~12h, so a
+# push alone does not deploy. This purges the cache so push == deploy.
+name: Purge jsDelivr
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'js/**'
+      - 'css/**'
+  workflow_dispatch:
+
+jobs:
+  purge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Purge CDN cache
+        run: |
+          for f in js/common.js js/config.js js/desktop.js css/config.css; do
+            url="https://purge.jsdelivr.net/gh/${GITHUB_REPOSITORY}@main/$f"
+            echo "purging $f"
+            curl -sS --max-time 30 "$url" || echo "  (purge request failed for $f)"
+            echo
+          done

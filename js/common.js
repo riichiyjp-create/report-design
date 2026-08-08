@@ -1,5 +1,6 @@
 /* =====================================================================
- * Report Designer - common.js  (v1.2.0)
+ * Report Designer - common.js
+ * (version is tracked in one place only: VERSION in config.js)
  * Shared rendering core used by BOTH config (preview) and desktop (print)
  * so output is guaranteed identical. Exposes window.RPTC.
  * All geometry in mm.

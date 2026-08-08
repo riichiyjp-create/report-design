@@ -1,5 +1,6 @@
 /* =====================================================================
- * Report Designer - desktop.js  (v1.24.8)
+ * Report Designer - desktop.js
+ * (version is tracked in one place only: VERSION in config.js)
  * Detail view: print current record. List view: batch-print current view.
  * Single template -> plain button; multiple -> dropdown menu.
  * Rendering via shared common.js (window.RPTC).
