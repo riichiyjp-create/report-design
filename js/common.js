@@ -1022,6 +1022,112 @@
     }).filter(Boolean);
   };
 
+  /* ---------------- template storage ----------------
+   * Constraints: kintone caps one config VALUE at 65,535 chars and the whole
+   * config at ~256KB, and manifest.json lists `templates` in required_params,
+   * so that key must exist or the plugin reads as unconfigured.
+   *
+   * Layout, newest format first:
+   *   tplz_n + tplz_0..   LZW-compressed JSON (preferred; ~3x smaller)
+   *   tpl_n  + tpl_0..    plain JSON, split across keys
+   *   templates           plain JSON in one key (original format)
+   *
+   * Fixed-width 16-bit LZW over UTF-8 bytes, base64 for storage. Fixed width
+   * means encoder and decoder cannot desync on code width - the classic
+   * variable-width LZW bug. Every write is verified by decoding it back before
+   * being accepted, so a codec fault degrades to plain JSON instead of
+   * destroying templates. */
+  var LZW_MAXD = 65536;
+  function bytesToB64(u8) {
+    var CH = 0x8000, s = '';
+    for (var i = 0; i < u8.length; i += CH) {
+      s += String.fromCharCode.apply(null, u8.subarray(i, i + CH));
+    }
+    return btoa(s);
+  }
+  function b64ToBytes(b64) {
+    var bin = atob(b64), u8 = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+    return u8;
+  }
+  RPTC.lzwEncode = function (str) {
+    if (typeof TextEncoder === 'undefined' || typeof btoa === 'undefined') return '';
+    var bytes = new TextEncoder().encode(String(str == null ? '' : str));
+    if (!bytes.length) return '';
+    var dict = new Map();
+    for (var i = 0; i < 256; i++) dict.set(String.fromCharCode(i), i);
+    var size = 256, codes = [], w = '';
+    for (var bi = 0; bi < bytes.length; bi++) {
+      var c = String.fromCharCode(bytes[bi]), wc = w + c;
+      if (dict.has(wc)) { w = wc; continue; }
+      codes.push(dict.get(w));
+      if (size < LZW_MAXD) dict.set(wc, size++);
+      w = c;
+    }
+    if (w !== '') codes.push(dict.get(w));
+    var out = new Uint8Array(codes.length * 2);
+    for (var k = 0; k < codes.length; k++) { out[k * 2] = codes[k] >> 8; out[k * 2 + 1] = codes[k] & 255; }
+    return bytesToB64(out);
+  };
+  // returns null on empty/corrupt input - callers must treat null as "no data"
+  RPTC.lzwDecode = function (b64) {
+    if (!b64 || typeof TextDecoder === 'undefined' || typeof atob === 'undefined') return null;
+    var u8;
+    try { u8 = b64ToBytes(b64); } catch (e) { return null; }
+    var n = u8.length >> 1;
+    if (!n) return null;
+    var dict = new Array(256);
+    for (var i = 0; i < 256; i++) dict[i] = String.fromCharCode(i);
+    var size = 256;
+    var prev = dict[(u8[0] << 8) | u8[1]];
+    if (prev === undefined) return null;
+    var parts = [prev];
+    for (var j = 1; j < n; j++) {
+      var c = (u8[j * 2] << 8) | u8[j * 2 + 1], entry;
+      if (c < size) entry = dict[c];
+      else if (c === size) entry = prev + prev[0];
+      else return null;
+      parts.push(entry);
+      if (size < LZW_MAXD) dict[size++] = prev + entry[0];
+      prev = entry;
+    }
+    var joined = parts.join('');
+    var bytes = new Uint8Array(joined.length);
+    for (var q = 0; q < joined.length; q++) bytes[q] = joined.charCodeAt(q) & 255;
+    try { return new TextDecoder().decode(bytes); } catch (e) { return null; }
+  };
+  RPTC.writeTemplates = function (conf, templates) {
+    var json = JSON.stringify(templates || []);
+    var packed = null;
+    try {
+      var p = RPTC.lzwEncode(json);
+      // accept only if it is smaller AND decodes back byte-identical
+      if (p && p.length < json.length && RPTC.lzwDecode(p) === json) packed = p;
+    } catch (e) { packed = null; }
+    if (packed) {
+      conf.templates = '[]';                 // required_params placeholder
+      var kz = RPTC.chunkValue('tplz_', packed);
+      Object.keys(kz).forEach(function (x) { conf[x] = kz[x]; });
+    } else if (json.length <= RPTC.VALUE_CHUNK) {
+      conf.templates = json;                 // original single-key format
+    } else {
+      conf.templates = '[]';
+      var kp = RPTC.chunkValue('tpl_', json);
+      Object.keys(kp).forEach(function (x) { conf[x] = kp[x]; });
+    }
+    return conf;
+  };
+  RPTC.readTemplates = function (conf) {
+    var z = RPTC.readChunked(conf, 'tplz_', null);
+    if (z) {
+      var j = RPTC.lzwDecode(z);
+      if (j) { try { return JSON.parse(j); } catch (e) { } }
+      console.error('[ReportDesigner] compressed templates failed to decode - falling back');
+    }
+    var plain = RPTC.readChunked(conf, 'tpl_', 'templates');
+    try { return plain ? JSON.parse(plain) : []; } catch (e) { return []; }
+  };
+
   // Which field codes does a template reference that the record does NOT contain?
   RPTC.missingFieldCodes = function (tpl, rec) {
     rec = rec || {};

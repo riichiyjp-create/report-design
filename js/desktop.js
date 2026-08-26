@@ -48,10 +48,7 @@
   function getConf() {
     var conf = kintone.plugin.app.getConfig(PLUGIN_ID) || {};
     var templates = [];
-    try {
-      var tplJson = RPTC.readChunked(conf, 'tpl_', 'templates');
-      templates = tplJson ? JSON.parse(tplJson) : [];
-    } catch (e) { }
+    try { templates = RPTC.readTemplates(conf); } catch (e) { }
     var legacyHideList = conf.showListButton === 'false';
     templates.forEach(function (tp) {
       if (tp.showInList == null) tp.showInList = !legacyHideList;
