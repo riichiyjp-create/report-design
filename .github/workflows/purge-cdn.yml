@@ -1,11 +1,13 @@
 # The kintone plugin zip is a fixed shell (manifest version 1) that loads all
-# first-party code from jsDelivr @main. jsDelivr caches @main for ~12h, so a
-# push alone does not deploy. This purges the cache so push == deploy.
+# first-party code from jsDelivr @main. jsDelivr caches @main, so a push alone
+# does not reliably deploy.
 #
-# Purging is NOT fire-and-forget: a purge issued before GitHub's raw endpoint
-# has settled makes jsDelivr re-fetch and re-cache the OLD file, which silently
-# leaves config.js and common.js on different versions. So every file is
-# verified against the committed content and re-purged until it matches.
+# Purging is rate-limited PER PATH. A throttled purge still answers
+# {"status":"finished"} while doing nothing, and hammering it triggers a
+# ~40 minute lockout - retrying a purge makes things strictly worse. So:
+#   1. check first; jsDelivr often picks up a push on its own
+#   2. purge AT MOST ONCE per file, and only if it is actually stale
+#   3. then poll with plain GETs, which are free and never throttled
 name: Purge jsDelivr
 
 on:
@@ -29,30 +31,41 @@ jobs:
           BASE="https://cdn.jsdelivr.net/gh/${GITHUB_REPOSITORY}@main"
           PURGE="https://purge.jsdelivr.net/gh/${GITHUB_REPOSITORY}@main"
 
-          # let GitHub's raw endpoint catch up, or the purge re-caches the old blob
-          sleep 20
+          sleep 20   # let GitHub's raw endpoint settle first
+
+          live() { curl -sS --max-time 30 "$BASE/$1" | sha256sum | cut -d' ' -f1; }
 
           failed=""
           for f in $FILES; do
             [ -f "$f" ] || { echo "skip $f (not in repo)"; continue; }
             want=$(sha256sum "$f" | cut -d' ' -f1)
+
+            if [ "$(live "$f")" = "$want" ]; then
+              echo "OK   $f (already current, no purge needed)"
+              continue
+            fi
+
+            resp=$(curl -sS --max-time 30 "$PURGE/$f" || echo '{}')
+            if printf '%s' "$resp" | grep -q '"throttled": *true'; then
+              reset=$(printf '%s' "$resp" | grep -o '"throttlingReset": *[0-9]*' | grep -o '[0-9]*$')
+              echo "::warning::$f purge THROTTLED by jsDelivr; resets in ${reset:-?}s. Not retrying - retries extend the lockout."
+            else
+              echo "purged $f"
+            fi
+
+            # poll only; never re-purge
             ok=""
-            for attempt in 1 2 3 4 5; do
-              curl -sS --max-time 30 "$PURGE/$f" > /dev/null || true
-              sleep $((attempt * 10))
-              got=$(curl -sS --max-time 30 "$BASE/$f" | sha256sum | cut -d' ' -f1)
-              if [ "$got" = "$want" ]; then
-                echo "OK   $f (attempt $attempt)"
-                ok=1
-                break
-              fi
-              echo "WAIT $f attempt $attempt: cdn=${got:0:12} want=${want:0:12}"
+            for wait in 10 20 30 40 60 60; do
+              sleep $wait
+              if [ "$(live "$f")" = "$want" ]; then echo "OK   $f (live after ${wait}s poll)"; ok=1; break; fi
+              echo "     $f still stale..."
             done
             [ -n "$ok" ] || failed="$failed $f"
           done
 
           if [ -n "$failed" ]; then
-            echo "::error::jsDelivr still stale for:$failed - the plugin will run mismatched versions"
+            echo "::error::jsDelivr still stale for:$failed - the plugin will run mismatched versions."
+            echo "::error::Do NOT re-run this job immediately; that re-purges and extends the throttle. Wait for the reset, then re-run."
             exit 1
           fi
           echo "all files verified live on jsDelivr"
