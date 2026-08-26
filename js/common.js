@@ -1239,7 +1239,7 @@
   /* The 256KB total limit's internal encoding is undocumented. We budget for
    * the WORST CASE of UTF-8 vs UTF-16 (2 bytes/char) so base64-heavy configs
    * can never trip kintone's check even if it counts UTF-16 units. */
-  RPTC.CONFIG_TOTAL_BUDGET = 250000;  // assumed hard total in bytes w/ margin
+  RPTC.CONFIG_TOTAL_BUDGET = 258000;  // assumed hard total in bytes w/ margin
   RPTC.IMG_TARGET_CHARS = 40000;      // per-image dataURL budget (chars)
   RPTC.byteSize = function (s) {
     s = String(s == null ? '' : s);
@@ -1252,10 +1252,13 @@
     }
     return b;
   };
-  // Worst-case size of one string under either encoding interpretation.
+  /* Size of one string as kintone is assumed to count it: UTF-8 bytes.
+   * This used to be max(utf8, chars*2) as a hedge against kintone counting
+   * UTF-16 units, which halved the usable budget for ASCII-heavy template
+   * JSON. If a save is ever rejected by kintone while the meter still shows
+   * headroom, that hedge was right and this should go back. */
   RPTC.worstSize = function (s) {
-    s = String(s == null ? '' : s);
-    return Math.max(RPTC.byteSize(s), s.length * 2);
+    return RPTC.byteSize(s);
   };
   RPTC.configTotalBytes = function (conf) {
     var total = 0;
@@ -1271,6 +1274,25 @@
     }).sort(function (a, b) { return b.kb - a.kb; });
   };
   var CHUNK = 60000; // below Kintone's 65535/key
+  /* Any oversized value has to be split across keys: kintone caps a single
+   * config VALUE at 65,535 chars regardless of how much total budget is left.
+   * templates hit that wall long before the 256KB total does. */
+  RPTC.VALUE_CHUNK = CHUNK;
+  RPTC.chunkValue = function (prefix, str) {
+    str = String(str == null ? '' : str);
+    var keys = {}, n = Math.max(1, Math.ceil(str.length / CHUNK));
+    for (var i = 0; i < n; i++) keys[prefix + i] = str.slice(i * CHUNK, (i + 1) * CHUNK);
+    keys[prefix + 'n'] = String(n);
+    return keys;
+  };
+  // legacyKey lets configs written before chunking still load unchanged
+  RPTC.readChunked = function (conf, prefix, legacyKey) {
+    var n = Number(conf[prefix + 'n']);
+    if (!n) return (legacyKey && conf[legacyKey]) || '';
+    var out = '';
+    for (var i = 0; i < n; i++) out += (conf[prefix + i] || '');
+    return out;
+  };
   RPTC.chunkImages = function (images) {
     var meta = {}, keys = {};
     Object.keys(images || {}).forEach(function (id) {

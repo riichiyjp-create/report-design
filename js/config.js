@@ -8,7 +8,7 @@
 (function (PLUGIN_ID) {
   'use strict';
 
-  var VERSION = '1.31.0';
+  var VERSION = '1.33.0';
   var RPT_HTML = "\n\n  <!-- ======== Toolbar ======== -->\n  <div id=\"rpt-toolbar\">\n    <span class=\"rpt-logo\" id=\"rpt-version\" style=\"font-size:11px;color:#999;font-weight:600;\"></span>\n\n    <span class=\"rpt-tb-group\">\n      <button type=\"button\" id=\"btn-add-text\"  class=\"rpt-tb-btn\" title=\"Text\">T</button>\n      <button type=\"button\" id=\"btn-add-rect\"  class=\"rpt-tb-btn\" title=\"Rectangle\">▭</button>\n      <button type=\"button\" id=\"btn-add-line\"  class=\"rpt-tb-btn\" title=\"Line\">─</button>\n      <button type=\"button\" id=\"btn-add-ellipse\" class=\"rpt-tb-btn\" title=\"Ellipse\">◯</button>\n      <button type=\"button\" id=\"btn-add-image\" class=\"rpt-tb-btn\" title=\"Image\">🖼</button>\n      <button type=\"button\" id=\"btn-add-barcode\" class=\"rpt-tb-btn\" title=\"Barcode\">〣</button>\n      <button type=\"button\" id=\"btn-add-qr\" class=\"rpt-tb-btn\" title=\"QR\">▩</button>\n      <button type=\"button\" id=\"btn-add-table\" class=\"rpt-tb-btn\" title=\"Table\">▦</button>\n    </span>\n\n    <span class=\"rpt-tb-group\">\n      <button type=\"button\" id=\"btn-undo\" class=\"rpt-tb-btn\" title=\"Undo (Ctrl+Z)\">↺</button>\n      <button type=\"button\" id=\"btn-redo\" class=\"rpt-tb-btn\" title=\"Redo (Ctrl+Y)\">↻</button>\n    </span>\n\n    <span class=\"rpt-tb-group\">\n      <label class=\"rpt-tb-label\"><input type=\"checkbox\" id=\"chk-snap\" checked> <span id=\"i18n-snap\">Snap</span></label>\n      <label class=\"rpt-tb-label\"><input type=\"checkbox\" id=\"chk-grid\" checked> <span id=\"i18n-grid\">Grid</span></label>\n      <select id=\"sel-gridsize\" class=\"rpt-tb-select\">\n        <option value=\"1\">1mm</option>\n        <option value=\"2\">2mm</option>\n        <option value=\"5\" selected>5mm</option>\n        <option value=\"10\">10mm</option>\n      </select>\n    </span>\n\n    <span class=\"rpt-tb-group\">\n      <button type=\"button\" id=\"btn-zoom-out\" class=\"rpt-tb-btn\">－</button>\n      <span id=\"zoom-label\" class=\"rpt-tb-label\">100%</span>\n      <button type=\"button\" id=\"btn-zoom-in\" class=\"rpt-tb-btn\">＋</button>\n    </span>\n\n    <span class=\"rpt-tb-group\">\n      <button type=\"button\" id=\"btn-preview\" class=\"rpt-tb-btn\" style=\"width:auto;padding:0 10px;\">👁 <span id=\"i18n-preview\">Preview</span></button>\n      <button type=\"button\" id=\"btn-help\" class=\"rpt-tb-btn rpt-help-btn\" title=\"Help\">?</button>\n    </span>\n\n    <span class=\"rpt-tb-spacer\"></span>\n    <span id=\"status-msg\"></span>\n    <button type=\"button\" id=\"btn-save\" class=\"rpt-btn-primary\" >Save</button>\n    <button type=\"button\" id=\"btn-cancel\" class=\"rpt-btn-plain\">Cancel</button>\n  </div>\n\n  <div id=\"rpt-body\">\n\n    <!-- ======== Left pane ======== -->\n    <div id=\"rpt-left\">\n      <div class=\"rpt-pane-title\" id=\"i18n-templates\">Templates</div>\n      <div id=\"template-list\"></div>\n      <button type=\"button\" id=\"btn-add-template\" class=\"rpt-btn-plain rpt-w100\">＋ <span id=\"i18n-add-template\">Add template</span></button>\n      <div style=\"display:flex;gap:4px;margin-top:4px;\">\n        <button type=\"button\" id=\"btn-export-tpl\" class=\"rpt-btn-mini\" style=\"flex:1;\">⇩ <span id=\"i18n-export\">Export</span></button>\n        <button type=\"button\" id=\"btn-import-tpl\" class=\"rpt-btn-mini\" style=\"flex:1;\">⇧ <span id=\"i18n-import\">Import</span></button>\n      </div>\n\n      <div class=\"rpt-pane-title\" id=\"i18n-fields\">Data Source</div>\n      <input type=\"text\" id=\"field-search\" class=\"rpt-w100\" placeholder=\"search...\">\n      <div id=\"field-palette\"></div>\n    </div>\n\n    <!-- ======== Canvas ======== -->\n    <div id=\"rpt-canvas-wrap\">\n      <div id=\"rpt-canvas-scroll\">\n        <div id=\"rpt-paper\">\n          <div id=\"rpt-page\">\n            <div id=\"rpt-grid\"></div>\n            <div id=\"rpt-elements\"></div>\n            <div id=\"rpt-guides\"></div>\n          </div>\n        </div>\n      </div>\n    </div>\n\n    <!-- ======== Right pane (properties) ======== -->\n    <div id=\"rpt-right\">\n      <div class=\"rpt-pane-title\" id=\"props-title\">Properties</div>\n      <div id=\"props-body\"></div>\n    </div>\n\n  </div>\n";
 
   /* ---------------- i18n ---------------- */
@@ -52,6 +52,7 @@
       fillRows: '空行で埋める', embed: '埋め込み', dblclickImg: 'ダブルクリックで画像ファイルを選択',
       imgTooBig: '画像が大きすぎます。より小さい画像を使用してください。',
       exportTpl: '書出', importTpl: '取込', importFail: 'テンプレートの読み込みに失敗しました',
+      cfgRejected: 'kintoneが設定の保存を拒否しました。\n現在: {cur}KB\n\n{err}\n\nテンプレート数を減らして再試行してください。',
       cfgUsage: '設定使用量', cfgOver: 'kintoneのプラグイン設定上限(256KB)を超えています。\n現在: {cur}KB / 上限目安: {max}KB\n\n内訳(上位):\n{detail}\n\n・埋め込み画像を減らす、または小さい画像に差し替えてください\n・大きなロゴはURL指定または添付ファイルフィールド参照も利用できます',
       imgRecompressed: '画像を自動的に再圧縮しました', saving: '保存中...',
       moveUp: '上へ', moveDown: '下へ', renameHint: 'ダブルクリックで名前を変更',
@@ -154,6 +155,7 @@
       fillRows: 'Fill empty rows', embed: 'Embedded', dblclickImg: 'Double-click to choose an image file',
       imgTooBig: 'Image too large. Please use a smaller image.',
       exportTpl: 'Export', importTpl: 'Import', importFail: 'Failed to import template',
+      cfgRejected: 'kintone refused to save the config.\nCurrent: {cur}KB\n\n{err}\n\nReduce templates and try again.',
       cfgUsage: 'Config usage', cfgOver: 'Exceeds kintone plugin config limit (256KB total).\nCurrent: {cur}KB / budget: {max}KB\n\nBreakdown (top):\n{detail}\n\n- Remove or shrink embedded images\n- Large logos can also use URL binding or a FILE field',
       imgRecompressed: 'Images were automatically re-compressed', saving: 'Saving...',
       moveUp: 'Up', moveDown: 'Down', renameHint: 'Double-click to rename',
@@ -244,7 +246,6 @@
     document.body.appendChild(dl);
   }
   var DATE_FORMATS = ['YYYY/MM/DD', 'YYYY-MM-DD', 'YYYY年M月D日', '和暦(令和n年M月D日)', 'M/D', 'YYYY/MM/DD HH:mm'];
-  var CONFIG_LIMIT = 60000; // per-key safety below Kintone 65535
 
   /* ---------------- state ---------------- */
   var state = {
@@ -3567,7 +3568,8 @@
       if (tp.showInList == null) tp.showInList = !legacyHideList;
     });
     try {
-      state.templates = conf.templates ? JSON.parse(conf.templates) : [];
+      var tplJson = RPTC.readChunked(conf, 'tpl_', 'templates');
+      state.templates = tplJson ? JSON.parse(tplJson) : [];
     } catch (e) { state.templates = []; }
     try {
       state.templateGroups = conf.templateGroups ? JSON.parse(conf.templateGroups) : [];
@@ -3607,12 +3609,13 @@
       return { name: g.name, ids: (g.ids || []).filter(function (id) { return liveIds[id]; }) };
     }).filter(function (g) { return g.name && g.ids.length >= 2; });
     var conf = {
-      templates: JSON.stringify(state.templates),
       templateGroups: JSON.stringify(groupsOut),
       buttonLabel: state.buttonLabel || '',
       imagesMeta: JSON.stringify(chunked.meta)
     };
     Object.keys(chunked.keys).forEach(function (k) { conf[k] = chunked.keys[k]; });
+    var tplKeys = RPTC.chunkValue('tpl_', JSON.stringify(state.templates));
+    Object.keys(tplKeys).forEach(function (k) { conf[k] = tplKeys[k]; });
     return conf;
   }
   // Recompress any embedded image over the per-image budget. cb(recompressedCount)
@@ -3658,8 +3661,7 @@
     return { conf: conf, total: total, kb: kb, maxKb: maxKb };
   }
   function saveConfig() {
-    if (JSON.stringify(state.templates).length > CONFIG_LIMIT) { alert(t('tooBig')); return; }
-    showBusy(t('saving'));
+    showBusy(t('saving')); // templates are chunked now, so no per-key ceiling here
     recompressOversized(function (n) {
       var u = updateUsageMeter();
       if (u.total > RPTC.CONFIG_TOTAL_BUDGET) {
@@ -3671,12 +3673,22 @@
         setStatus(t('cfgUsage') + ': ' + u.kb + 'KB / ' + u.maxKb + 'KB');
         return;
       }
-      kintone.plugin.app.setConfig(u.conf, function () {
+      // kintone is the real authority on the ceiling; surface a rejection
+      // instead of leaving the spinner up with the work silently unsaved
+      try {
+        kintone.plugin.app.setConfig(u.conf, function () {
+          hideBusy();
+          state.dirty = false;
+          setStatus(t('saved') + (n ? ' (' + t('imgRecompressed') + ')' : '') +
+            ' - ' + t('cfgUsage') + ': ' + u.kb + 'KB / ' + u.maxKb + 'KB');
+        });
+      } catch (e) {
         hideBusy();
-        state.dirty = false;
-        setStatus(t('saved') + (n ? ' (' + t('imgRecompressed') + ')' : '') +
-          ' - ' + t('cfgUsage') + ': ' + u.kb + 'KB / ' + u.maxKb + 'KB');
-      });
+        console.error('[ReportDesigner] setConfig rejected at ' + u.total + ' bytes / ' +
+          Object.keys(u.conf).length + ' keys', e);
+        alert(t('cfgRejected').replace('{cur}', u.kb).replace('{err}', String(e && e.message || e)));
+        setStatus(t('cfgUsage') + ': ' + u.kb + 'KB (kintone rejected)');
+      }
     });
   }
 
