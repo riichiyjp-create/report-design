@@ -1096,11 +1096,23 @@
     for (var q = 0; q < joined.length; q++) bytes[q] = joined.charCodeAt(q) & 255;
     try { return new TextDecoder().decode(bytes); } catch (e) { return null; }
   };
+  /* PHASE GATE. The plugin loads config.js on the settings page and
+   * desktop.js on record pages as SEPARATE jsDelivr fetches, which can resolve
+   * to different commits. If the writer starts emitting the compressed format
+   * before every reader understands it, a stale record page reads the '[]'
+   * placeholder and reports zero templates - total, silent template loss.
+   *
+   * So the reader shipped first (it has understood tplz_* since 1.35.0) and the
+   * writer still emits the plain format every reader since 1.33 can parse.
+   * Flip this to true only once every page is confirmed to be running a
+   * common.js that has RPTC.lzwDecode - check on a RECORD page, not the
+   * settings page:  typeof RPTC.lzwDecode === 'function'  */
+  RPTC.WRITE_COMPRESSED = false;
   RPTC.writeTemplates = function (conf, templates) {
     var json = JSON.stringify(templates || []);
     var packed = null;
     try {
-      var p = RPTC.lzwEncode(json);
+      var p = RPTC.WRITE_COMPRESSED ? RPTC.lzwEncode(json) : '';
       // accept only if it is smaller AND decodes back byte-identical
       if (p && p.length < json.length && RPTC.lzwDecode(p) === json) packed = p;
     } catch (e) { packed = null; }
@@ -1122,7 +1134,10 @@
     if (z) {
       var j = RPTC.lzwDecode(z);
       if (j) { try { return JSON.parse(j); } catch (e) { } }
-      console.error('[ReportDesigner] compressed templates failed to decode - falling back');
+      console.error('[ReportDesigner] compressed templates present but not decodable here. ' +
+        'This page is running an older common.js than the one that saved the config ' +
+        '(RPTC.lzwDecode ' + (typeof RPTC.lzwDecode === 'function' ? 'exists but failed' : 'is MISSING') +
+        '). Re-save from the plugin settings page to rewrite them in the plain format.');
     }
     var plain = RPTC.readChunked(conf, 'tpl_', 'templates');
     try { return plain ? JSON.parse(plain) : []; } catch (e) { return []; }
